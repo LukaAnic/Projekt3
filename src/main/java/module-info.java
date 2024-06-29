@@ -3,6 +3,7 @@ module at.wifi.ca.projekt3 {
     requires javafx.fxml;
     requires java.sql;
     requires password4j;
+    requires org.slf4j;
 
 
     opens at.wifi.ca.projekt3 to javafx.fxml;

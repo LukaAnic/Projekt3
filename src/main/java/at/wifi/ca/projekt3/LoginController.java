@@ -25,9 +25,7 @@ public class LoginController {
     @FXML
     protected void onLoginButtonClick(ActionEvent actionEvent) throws SQLException, IOException {
 
-        UserDAO dao = new UserDAO();
-
-         User user = dao.findByEmail(emailTextField.getText());
+         User user = MasterDAO.UserFindByEmail(emailTextField.getText());
 
          if (user != null){
              String encryptedPassword = user.getPassword();
@@ -37,12 +35,13 @@ public class LoginController {
 
 
              if (verified){
+                 DataExchangeHolder.getInstance().setLoggedInUser(user);
+
+
                  Stage stage = (Stage) ((Node)actionEvent.getSource()).getScene().getWindow();
 
                  FXMLLoader chatView = new FXMLLoader(getClass().getResource("chat-view.fxml"));
                  Scene chatScene = new Scene(chatView.load());
-                 chatController controller = chatView.getController();
-                 controller.setLoggedInUser(user);
 
                  stage.setScene(chatScene);
                  stage.setTitle("Chat");

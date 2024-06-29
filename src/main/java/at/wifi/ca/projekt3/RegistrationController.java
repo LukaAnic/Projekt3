@@ -51,13 +51,12 @@ public class RegistrationController implements Initializable {
         this.user.setPassword(hash.getResult());
 
         try {
-            UserDAO dao = new UserDAO();
-
-           if (dao.create(this.user)){
+           if (MasterDAO.UserCreate(this.user)){
                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                alert.setTitle("Das ist der Titel");
                alert.setHeaderText("Das ist der Kopf");
                alert.setContentText("Das ist der Text");
+               alert.showAndWait();
 
                Stage stage = (Stage) ((Node)actionEvent.getSource()).getScene().getWindow();
                stage.close();
