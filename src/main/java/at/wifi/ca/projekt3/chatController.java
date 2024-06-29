@@ -1,6 +1,7 @@
 package at.wifi.ca.projekt3;
 
 import at.wifi.ca.projekt3.model.User;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -9,6 +10,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
@@ -20,10 +22,13 @@ import java.util.ResourceBundle;
 
 public class chatController implements Initializable {
 
-
     User loggedInUser;
 
-    protected ObservableList<User> friends;
+    protected ObservableList<User> onlineFriends = FXCollections.observableArrayList();
+
+    protected ObservableList<String> messageList = FXCollections.observableArrayList();
+
+    protected ChatClient activeClient = null;
 
 
 
@@ -34,6 +39,8 @@ public class chatController implements Initializable {
     protected CheckMenuItem switchStatusMenuItem;
     @FXML
     protected TextField messageTextField;
+    @FXML
+    protected ListView<String> messageListView;
     @FXML
     protected ListView<User> onlineFriendsListView;
 
@@ -51,12 +58,19 @@ public class chatController implements Initializable {
     //////// Chat View Methods ////////
     @FXML
     protected void sendMessage(ActionEvent actionEvent) {
+        if (messageTextField.getText() != null){
+            String message = messageTextField.getText();
 
+            activeClient.sendMessage(message);
+        }
     }
 
     @FXML
     protected void logOutMIClick(ActionEvent actionEvent) throws IOException {
         loggedInUser = null;
+        onlineFriends.clear();
+        DataExchangeHolder.getInstance().setFriends(onlineFriends);
+        DataExchangeHolder.getInstance().setLoggedInUser(null);
 
         //Es muss messageTextField verwendet werden, da man auf MenuItem nicht Node casten kann
         MasterSceneHandler.changeScene(messageTextField, "login-view.fxml", "Login");
@@ -116,6 +130,20 @@ public class chatController implements Initializable {
     protected void changePasswordMIClick(ActionEvent actionEvent) {
     }
 
+    @FXML
+    protected void removeFriendAction(ActionEvent actionEvent) {
+        User selectedFriend = onlineFriendsListView.getSelectionModel().getSelectedItem();
+
+        if (selectedFriend != null){
+            try {
+                MasterDAO.FriendDelete(selectedFriend);
+                onlineFriends.remove(selectedFriend);
+            } catch (SQLException e) {
+                MasterAlerts.error("Added Friend", "Something went wrong", ("Error Message: \n" + e));
+            }
+        }
+    }
+
     //////// Add Friend View Methods ////////
     @FXML
     protected void addFriendAction(ActionEvent actionEvent) throws SQLException {
@@ -143,7 +171,13 @@ public class chatController implements Initializable {
                 MasterDAO.FriendInsert(loggedInUser, friendToAdd);
 
                 MasterAlerts.information("Added Friend", "You have added a new Friend", ("Your are now friends with " + friendToAdd.getUserName()));
-            } catch (SQLException e) {
+
+                if (!friendToAdd.isAlwaysOffline()){
+                    onlineFriends.add(friendToAdd);
+                    DataExchangeHolder.getInstance().setFriends(onlineFriends);
+                }
+
+                } catch (SQLException e) {
                 MasterAlerts.error("Added Friend", "Something went wrong", ("Error Message: \n" + e));
             }
         } else if (friendToAdd == null){
@@ -188,22 +222,47 @@ public class chatController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         loggedInUser = DataExchangeHolder.getInstance().getLoggedInUser();
+        onlineFriends = DataExchangeHolder.getInstance().getFriends();
+
+
+        if (activeClient == null && messageListView != null){
+
+            messageListView.setItems(messageList);
+
+            activeClient = new ChatClient();
+
+            try {
+                activeClient.startConnection(messageList);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+
+        }
+
 
         if (switchStatusMenuItem != null){
             switchStatusMenuItem.setSelected(loggedInUser.isAlwaysOffline());
         }
 
         if (this.onlineFriendsListView != null){
-            friends = FXCollections.observableArrayList();
             try {
-                friends.addAll(MasterDAO.FriendGetAll(loggedInUser));
+                ArrayList<User> allFriends = (ArrayList<User>) MasterDAO.FriendGetAll(loggedInUser);
+
+                for (User friend : allFriends){
+                    if (!friend.isAlwaysOffline()){
+                        onlineFriends.add(friend);
+                    }
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-            onlineFriendsListView.setItems(friends);
+            onlineFriendsListView.setItems(onlineFriends);
 
-            //Damit nur der Username in der ListView angezeigt wird
+
             onlineFriendsListView.setCellFactory(new Callback<ListView<User>, ListCell<User>>() {
+
+                //Damit nur der Username in der ListView angezeigt wird
                 @Override
                 public ListCell<User> call(ListView<User> userListView) {
                     return new ListCell<User>() {
@@ -220,17 +279,5 @@ public class chatController implements Initializable {
                 }
             });
         }
-
-
     }
-
-
-
-    //Controller Methods
-
-
-    public void setLoggedInUser(User logedInUser) {
-        this.loggedInUser = logedInUser;
-    }
-
 }

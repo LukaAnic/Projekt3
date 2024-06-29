@@ -141,6 +141,18 @@ public final class MasterDAO {
         }
     }
 
+    public static boolean FriendDelete(User user) throws SQLException {
+        try (
+                PreparedStatement pStmt = con.prepareStatement("DELETE FROM Friends WHERE user1Id = ? OR user2Id = ?")
+                ){
+            pStmt.setInt(1, user.getId());
+            pStmt.setInt(2, user.getId());
+
+            return pStmt.execute();
+
+        }
+    }
+
 
 
 }
