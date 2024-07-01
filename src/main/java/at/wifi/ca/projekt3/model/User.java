@@ -8,6 +8,7 @@ public class User {
     protected StringProperty email;
     protected StringProperty password;
     protected BooleanProperty alwaysOffline;
+    protected BooleanProperty currentlyOnline;
 
     public User(){
      this.id = new SimpleIntegerProperty();
@@ -15,14 +16,16 @@ public class User {
      this.email = new SimpleStringProperty();
      this.password = new SimpleStringProperty();
      this.alwaysOffline = new SimpleBooleanProperty();
+     this.currentlyOnline = new SimpleBooleanProperty();
     }
 
-    public User(int id, String userName, String email, String password, boolean alwaysOffline) {
+    public User(int id, String userName, String email, String password, boolean alwaysOffline, boolean currentlyOnline) {
         this.id = new SimpleIntegerProperty(id);
         this.userName = new SimpleStringProperty(userName);
         this.email = new SimpleStringProperty(email);
         this.password = new SimpleStringProperty(password);
         this.alwaysOffline = new SimpleBooleanProperty(alwaysOffline);
+        this.currentlyOnline = new SimpleBooleanProperty(currentlyOnline);
     }
 
     public int getId() {
@@ -85,6 +88,17 @@ public class User {
         this.alwaysOffline.set(alwaysOffline);
     }
 
+    public boolean isCurrentlyOnline() {
+        return currentlyOnline.get();
+    }
+
+    public BooleanProperty currentlyOnlineProperty() {
+        return currentlyOnline;
+    }
+
+    public void setCurrentlyOnline(boolean currentlyOnline) {
+        this.currentlyOnline.set(currentlyOnline);
+    }
 
     @Override
     public String toString() {

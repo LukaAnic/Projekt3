@@ -37,8 +37,8 @@ public class LoginController {
              if (verified){
                  DataExchangeHolder.getInstance().setLoggedInUser(user);
 
-
                  Stage stage = (Stage) ((Node)actionEvent.getSource()).getScene().getWindow();
+                 DataExchangeHolder.getInstance().setMainStage(stage);
 
                  FXMLLoader chatView = new FXMLLoader(getClass().getResource("chat-view.fxml"));
                  Scene chatScene = new Scene(chatView.load());

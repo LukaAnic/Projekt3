@@ -1,11 +1,9 @@
 package at.wifi.ca.projekt3;
 
+import at.wifi.ca.projekt3.model.Message;
 import at.wifi.ca.projekt3.model.User;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +34,7 @@ public final class MasterDAO {
 
             ResultSet rs = pStmt.executeQuery();
             if (rs.next()){
-                return new User(rs.getInt("id"), rs.getString("userName"), rs.getString("email"), rs.getString("password"), rs.getBoolean("alwaysOffline"));
+                return new User(rs.getInt("id"), rs.getString("userName"), rs.getString("email"), rs.getString("password"), rs.getBoolean("alwaysOffline"), rs.getBoolean("currentlyOnline"));
             }
         }
 
@@ -51,7 +49,7 @@ public final class MasterDAO {
 
             ResultSet rs = pStmt.executeQuery();
             if (rs.next()){
-                return new User(rs.getInt("id"), rs.getString("userName"), rs.getString("email"), rs.getString("password"), rs.getBoolean("alwaysOffline"));
+                return new User(rs.getInt("id"), rs.getString("userName"), rs.getString("email"), rs.getString("password"), rs.getBoolean("alwaysOffline"), rs.getBoolean("currentlyOnline"));
             }
         }
 
@@ -60,27 +58,29 @@ public final class MasterDAO {
 
     public static boolean UserCreate(User user) throws SQLException {
         try (
-                PreparedStatement pStmt = con.prepareStatement("INSERT INTO Users(userName, email, password, alwaysOffline) VALUES(?,?,?,?)")
+                PreparedStatement pStmt = con.prepareStatement("INSERT INTO Users(userName, email, password, alwaysOffline, currentlyOnline) VALUES(?,?,?,?,?)")
         ) {
             pStmt.setString(1, user.getUserName());
             pStmt.setString(2, user.getEmail());
             pStmt.setString(3, user.getPassword());
             pStmt.setBoolean(4, user.isAlwaysOffline());
+            pStmt.setBoolean(5, user.isCurrentlyOnline());
 
-            return  pStmt.execute();
+            return pStmt.executeUpdate() > 0;
         }
     }
 
     public static boolean UserUpdate(User user)throws SQLException {
         try (
-                PreparedStatement pStmt = con.prepareStatement("UPDATE Users SET userName = ?, password = ?, alwaysOffline = ? WHERE id = ?")
+                PreparedStatement pStmt = con.prepareStatement("UPDATE Users SET userName = ?, password = ?, alwaysOffline = ?, currentlyOnline = ? WHERE id = ?")
                 ){
             pStmt.setString(1, user.getUserName());
             pStmt.setString(2, user.getPassword());
             pStmt.setBoolean(3, user.isAlwaysOffline());
-            pStmt.setInt(4, user.getId());
+            pStmt.setBoolean(4, user.isCurrentlyOnline());
+            pStmt.setInt(5, user.getId());
 
-            return pStmt.execute();
+            return pStmt.executeUpdate() > 0;
         }
     }
 
@@ -94,7 +94,7 @@ public final class MasterDAO {
                 ){
             pStmt.setInt(1, UserId);
 
-            return pStmt.execute();
+            return pStmt.executeUpdate() > 0;
         }
     }
 
@@ -122,7 +122,7 @@ public final class MasterDAO {
             ResultSet rs = pStmt.executeQuery();
 
             while (rs.next()){
-                User newUser = new User(rs.getInt("id"), rs.getString("userName"), rs.getString("email"), rs.getString("password"), rs.getBoolean("alwaysOffline"));
+                User newUser = new User(rs.getInt("id"), rs.getString("userName"), rs.getString("email"), rs.getString("password"), rs.getBoolean("alwaysOffline"), rs.getBoolean("currentlyOnline"));
                 friends.add(newUser);
             }
 
@@ -137,7 +137,7 @@ public final class MasterDAO {
             pStmt.setInt(1, user1.getId());
             pStmt.setInt(2, user2.getId());
 
-            return pStmt.execute();
+            return pStmt.executeUpdate() > 0;
         }
     }
 
@@ -148,11 +148,30 @@ public final class MasterDAO {
             pStmt.setInt(1, user.getId());
             pStmt.setInt(2, user.getId());
 
-            return pStmt.execute();
-
+            return pStmt.executeUpdate() > 0;
         }
     }
 
 
+    ////////////////// Friends /////////////////////////////
 
+
+    public static int MessageInsert(Message message) throws SQLException {
+        try (
+                PreparedStatement pStmt = con.prepareStatement("INSERT INTO Messages (text, userId) VALUES (?,?) ", Statement.RETURN_GENERATED_KEYS)
+                ){
+            pStmt.setString(1, message.getText());
+            pStmt.setInt(2, message.getUserId());
+
+            if(pStmt.executeUpdate() > 0){
+                //Gibt den Index Key der Nachricht zurück
+                return pStmt.getGeneratedKeys().getInt(1);
+            }
+            return 0;
+        }
+    }
+
+    public static User MessageGetUser(Message message) throws SQLException {
+        return  UserFindById(message.getUserId());
+    }
 }

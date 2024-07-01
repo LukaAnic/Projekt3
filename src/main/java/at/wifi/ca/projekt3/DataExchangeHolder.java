@@ -4,13 +4,14 @@ import at.wifi.ca.projekt3.model.User;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.stage.Stage;
 
 public class DataExchangeHolder {
     private User loggedInUser;
 
     private ObservableList<User> friends = FXCollections.observableArrayList();
 
-    private String receivedMessage;
+    private Stage mainStage;
 
     private static DataExchangeHolder INSTANCE;
 
@@ -39,11 +40,11 @@ public class DataExchangeHolder {
         this.friends = friends;
     }
 
-    public String getReceivedMessage() {
-        return receivedMessage;
+    public Stage getMainStage() {
+        return mainStage;
     }
 
-    public void setReceivedMessage(String receivedMessage) {
-        this.receivedMessage = receivedMessage;
+    public void setMainStage(Stage mainStage) {
+        this.mainStage = mainStage;
     }
 }
